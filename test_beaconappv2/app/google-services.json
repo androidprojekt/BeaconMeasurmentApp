@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "118289046497",
+    "firebase_url": "https://savingapp2.firebaseio.com",
+    "project_id": "savingapp2",
+    "storage_bucket": "savingapp2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:118289046497:android:440fcec637196e7a4090a0",
+        "android_client_info": {
+          "package_name": "com.example.test_beaconapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "118289046497-p8cav3v8vlgqam209jnqf1fm833r38ok.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.test_beaconapp",
+            "certificate_hash": "9b0d03b9ab6a67c8d1018843fe6f0bfab6c9db48"
+          }
+        },
+        {
+          "client_id": "118289046497-k5e8ktfa6qkrr23ahsaasbpp5pb13ufq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBv9FiXStrgehs_ffXb0eRdOY58djoEnRE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "118289046497-k5e8ktfa6qkrr23ahsaasbpp5pb13ufq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "251404945526",
+    "firebase_url": "https://savingrssi.firebaseio.com",
+    "project_id": "savingrssi",
+    "storage_bucket": "savingrssi.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:251404945526:android:3a4120757725ea3f6e3757",
+        "android_client_info": {
+          "package_name": "com.example.test_beaconapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "251404945526-9fipitidjs6hdid328q89cg5pg54ps9r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAS-GQ1X_O06zbeHF4nv9xSdshfbp8gjv4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "251404945526-9fipitidjs6hdid328q89cg5pg54ps9r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

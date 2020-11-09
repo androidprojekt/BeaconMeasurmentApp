@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="260dp"
+
+        >
+
+        <ListView
+            android:id="@+id/listView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="0dp" />
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_marginTop="260dp">
+
+        <ListView
+            android:id="@+id/listViewWifi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginTop="0dp"
+            android:layout_marginBottom="53dp" />
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_marginTop="400dp">
+        <Button
+            android:id="@+id/buttonId"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="247dp"
+            android:layout_marginBottom="31dp"
+            android:text="Start scan" />
+
+        <TextView
+            android:id="@+id/directionCompassId"
+            android:layout_width="393dp"
+            android:layout_height="80dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="216dp"
+            android:text="Direction: " />
+
+        <TextView
+            android:id="@+id/sensorTvId"
+            android:layout_width="197dp"
+            android:layout_height="82dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="128dp"
+            android:text="Magnetometer value:  " />
+
+        <Button
+            android:id="@+id/saveToDatabeseBtnId"
+            android:layout_width="147dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="59dp"
+            android:layout_marginBottom="31dp"
+            android:text="Save measurments" />
+
+    </RelativeLayout>
+</RelativeLayout>
