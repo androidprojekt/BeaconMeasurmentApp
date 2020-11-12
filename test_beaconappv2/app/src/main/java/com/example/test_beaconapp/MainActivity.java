@@ -8,6 +8,11 @@ import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -18,6 +23,8 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelUuid;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
@@ -31,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.UUID;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_PHONE_STATE;
@@ -48,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView magnetometerSensorValueTv, directionCompassTv;
     private Button scanBtn, saveToDatabaseBtn;
     private BluetoothManager mBluetoothManager;
+    BluetoothLeScanner mBluetoothLeScanner;
     private Context context;
     private Handler mHandler = new Handler();
     private ArrayList<Transmitter> beaconList,wifiList;
@@ -95,6 +104,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     DatabaseReference wifiReference;
 //---------------------------------------------------------------------------
 
+    List<ScanFilter> filters;
+    ScanSettings scanSettings;
+
+
+    private static final UUID uuid =UUID.fromString("b9407f30-f5f8-466e-aff9-25556b57fe6d");
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -114,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         //--------------------Bluetooth and Wifi-------------------
         mBluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         mBlueToothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mBluetoothLeScanner = mBlueToothAdapter.getBluetoothLeScanner(); // new solution for scanning
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         beaconList = new ArrayList<>();
         wifiList = new ArrayList<>();
@@ -165,23 +182,49 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         wifiReference =  FirebaseDatabase.getInstance().getReference().child("wifi Values");
         magnetometerReference = FirebaseDatabase.getInstance().getReference().child("Magnetometer Values");
         //------------------------------------------------------------------------------------------
+
+        //--------------------Settings and filters for scanning bluetooth devices-------------------
+        String[] peripheralAddresses = new String[]{"C6:40:D6:9C:59:7E","E8:D4:18:0D:DB:37"};
+// Build filters list
+            filters = null;
+        if (peripheralAddresses != null) {
+            filters = new ArrayList<>();
+            for (String address : peripheralAddresses) {
+                ScanFilter filter = new ScanFilter.Builder()
+                        .setDeviceAddress(address)
+                        .build();
+                filters.add(filter);
+            }
+        }
+                     scanSettings = new ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
+                .setReportDelay(0L)
+                .build();
     }
+    //----------------------------------------------------------------------------------------------
 
     //-----------------------------------------Threads----------------------------------------------
     private Runnable BLEstopScan = new Runnable() {
+
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
-
-            mBlueToothAdapter.stopLeScan(mLeScanCallback);
-            mHandler.postDelayed(BLEstartScan, 2000);
+            //mBlueToothAdapter.stopLeScan(mLeScanCallback); old solution
+            mBluetoothLeScanner.stopScan(scanCallback);
+            mHandler.postDelayed(BLEstartScan, 100);
         }
     };
 
     private Runnable BLEstartScan = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
             //start scanning Beacons or BLE devices
-            mBlueToothAdapter.startLeScan(mLeScanCallback);
+            //mBlueToothAdapter.startLeScan(mLeScanCallback); old solution
+            mBluetoothLeScanner.startScan(filters,scanSettings,scanCallback);
             mHandler.postDelayed(BLEstopScan, 6000);
         }
     };
@@ -216,10 +259,78 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 //--------------------------------------------------------------------------------------------------
 
+
+@RequiresApi(api = Build.VERSION_CODES.N)
+    private ScanCallback scanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+
+            final BluetoothDevice device = result.getDevice();
+            final int rssi = result.getRssi();
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    calendar = Calendar.getInstance();
+                    if (beaconList.size() == 2) {
+                        //we limit the list to two items (because we have only 2 beacons)
+                        if (beaconList.get(0).getMacAdress().contains(device.getAddress())) {
+                            //overwriting the values of a given beacon
+                            beaconList.get(0).setLastUpdate(simpleDateFormat.format(calendar.getTime()));
+                            beaconList.get(0).setRssi(rssi);
+
+                            if(flagBle) {
+                                //a flag specifying if still collect data into database
+                                if(bleDatabaseIterator == numberOfSamples) {
+                                    flagBle = false;
+                                    Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
+                                }
+                                beaconReference.child(String.valueOf(++maxid)).setValue(rssi);
+                                bleDatabaseIterator++;
+                            }
+                        } else {
+                            //overwriting the value of a given beacon
+                            beaconList.get(1).setLastUpdate(simpleDateFormat.format(calendar.getTime()));
+                            beaconList.get(1).setRssi(rssi);
+                            if(flagBle2) {
+                                //a flag specifying if still collect data into database
+                                if(ble2DatabaseIterator == numberOfSamples) {
+                                    flagBle2 = false;
+                                    Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
+                                }
+                                beaconReference2.child(String.valueOf(++maxidbeacon2)).setValue(rssi);
+                                ble2DatabaseIterator++;
+                            }
+                        }
+                        listViewBeacon.setAdapter(adapterBle);
+
+                    } else {
+                        //filling the list with two beacons
+
+                        Transmitter transmitter = new Transmitter(device.getAddress(), simpleDateFormat.format(calendar.getTime()), rssi, "Beacon");
+                        beaconList.add(transmitter);
+                       // Log.i("TEST_UUID", "uuid: " + iBeacon.getUUID());
+
+                        if (beaconList.size() == 2 && beaconList.get(0).getMacAdress().contains(transmitter.getMacAdress())) {
+                            //preventing the repetition of beacons on the list
+                            beaconList.remove(1);
+                        }
+                        listViewBeacon.setAdapter(adapterBle);
+                    }
+                }
+            });
+
+        }
+    };
+
+    //onlescan
+ /* // Old Solution for scanning bluetooth devices
     private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
 
         @Override
         public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
+
 
             final BluetoothLeDevice deviceLe = new BluetoothLeDevice(device, rssi, scanRecord, System.currentTimeMillis());  //found BLE device (beacon, phone or something else)
             context = getApplicationContext();
@@ -266,8 +377,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                         } else {
                             //filling the list with two beacons
+
                             Transmitter transmitter = new Transmitter(iBeacon.getAddress(), simpleDateFormat.format(calendar.getTime()), iBeacon.getRssi(), "Beacon");
                             beaconList.add(transmitter);
+                            Log.i("TEST_UUID", "uuid: " + iBeacon.getUUID());
 
                             if (beaconList.size() == 2 && beaconList.get(0).getMacAdress().contains(transmitter.getMacAdress())) {
                                 //preventing the repetition of beacons on the list
@@ -280,6 +393,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         }
     };
+*/
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
