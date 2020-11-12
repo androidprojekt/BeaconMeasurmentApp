@@ -25,14 +25,14 @@
             android:gravity="center"
             android:text="TextView2"
             android:layout_width="match_parent"
-            android:layout_height="30dp"
+            android:layout_height="20dp"
             android:id="@+id/lastUpdateTvId"/>
 
         <TextView
             android:gravity="center"
             android:text="TextView3"
             android:layout_width="match_parent"
-            android:layout_height="30dp"
+            android:layout_height="20dp"
             android:id="@+id/rssiTvId"
             android:layout_below="@+id/textView2"/>
 
@@ -40,7 +40,7 @@
             android:gravity="center"
             android:text="TextView4"
             android:layout_width="match_parent"
-            android:layout_height="30dp"
+            android:layout_height="20dp"
             android:id="@+id/typeTvId"/>
 
     </LinearLayout>

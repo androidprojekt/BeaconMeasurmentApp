@@ -24,7 +24,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="150dp"
-        android:layout_marginTop="260dp">
+        android:layout_marginTop="280dp">
 
         <ListView
             android:id="@+id/listViewWifi"
