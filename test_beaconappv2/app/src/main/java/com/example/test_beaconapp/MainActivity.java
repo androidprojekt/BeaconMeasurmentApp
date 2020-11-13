@@ -23,7 +23,6 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.ParcelUuid;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -38,15 +37,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.UUID;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_PHONE_STATE;
-
-import uk.co.alt236.bluetoothlelib.device.BluetoothLeDevice;
-import uk.co.alt236.bluetoothlelib.device.beacon.BeaconType;
-import uk.co.alt236.bluetoothlelib.device.beacon.BeaconUtils;
-import uk.co.alt236.bluetoothlelib.device.beacon.ibeacon.IBeaconDevice;
 
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -93,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //------------------------------variables needed to compass------------------------------------
     private final float[] accelerometerReading = new float[3];
     private final float[] magnetometerReading = new float[3];
-    int azimuth =0;
+    int azimuth = 0;
     private final float[] rotationMatrix = new float[9];
     private final float[] orientationAngles = new float[3];
     //---------------------------------------------------------------------------------------------
@@ -102,11 +95,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     DatabaseReference beaconReference2;
     DatabaseReference magnetometerReference;
     DatabaseReference wifiReference;
+    DatabaseReference mDatabaseReference;
 //---------------------------------------------------------------------------
 
     List<ScanFilter> filters;
     ScanSettings scanSettings;
-
+    int beacon1Array[];
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -168,17 +162,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View view) {
                 flagBle = true;
-                flagMagnetometer = true;
-                flagWifi = true;
-                flagBle2 = true;
             }
         });
 
         //-------------------------Database Settings------------------------------------------------
+
         beaconReference = FirebaseDatabase.getInstance().getReference().child("beacon1 Values");
         beaconReference2 = FirebaseDatabase.getInstance().getReference().child("beacon2 Values");
         wifiReference = FirebaseDatabase.getInstance().getReference().child("wifi Values");
         magnetometerReference = FirebaseDatabase.getInstance().getReference().child("Magnetometer Values");
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference();
         //------------------------------------------------------------------------------------------
 
         //--------------------Settings and filters for scanning bluetooth devices-------------------
@@ -202,6 +195,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
                 .setReportDelay(0L)
                 .build();
+/*
+        int myArray[] = { 1, 2, 3 };
+        Double average = Arrays.stream(myArray).average().getAsDouble();
+        Toast.makeText(getApplicationContext(),"average: "+ average,Toast.LENGTH_LONG).show();
+ */
     }
     //----------------------------------------------------------------------------------------------
 
@@ -280,6 +278,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                 newBeacon = false;
                                 transmitter.setRssi(rssi);
                                 transmitter.setLastUpdate(simpleDateFormat.format(calendar.getTime()));
+
+                                if (flagBle) {
+                                    if (transmitter.isSavingSamples()) {
+                                        if (transmitter.getSamplesIterator() == 50) {
+                                            transmitter.setSavingSamples(false);
+                                            Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
+                                            String str = "av of: "+ transmitter.getMacAdress()+": ";
+                                            double average = averageOfList(transmitter.getSamplesTab());
+                                            Log.d("AVERAGE" ,str+average);
+                                        }
+                                        else {
+                                            mDatabaseReference.child(result.getDevice().getAddress()).child(String.valueOf(transmitter.getSamplesIterator())).setValue(rssi);
+                                            //beaconReference.child(String.valueOf(++maxid)).setValue(rssi);
+                                            transmitter.addToTheSamplesTab(rssi);
+                                            transmitter.setSamplesIterator();
+                                        }
+                                    }
+
+                                }
                             }
                         }
                         if (newBeacon == true) {
@@ -466,5 +483,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mHandler.removeCallbacks(wifiScanner);
         mSensorManager.unregisterListener(this);
     }
+
+    public double averageOfList(ArrayList<Integer> list)
+    {
+        double average=0.0;
+        int sum=0;
+        for(int element:list)
+        {
+            sum+=element;
+        }
+        average = (double)sum/(list.size());
+        return average;
+    }
+
 
 }
