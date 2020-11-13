@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //------------------------------variables needed to compass------------------------------------
     private final float[] accelerometerReading = new float[3];
     private final float[] magnetometerReading = new float[3];
-    float azimuth = 0f;
+    int azimuth =0;
     private final float[] rotationMatrix = new float[9];
     private final float[] orientationAngles = new float[3];
     //---------------------------------------------------------------------------------------------
@@ -108,8 +108,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     ScanSettings scanSettings;
 
 
-    private static final UUID uuid = UUID.fromString("b9407f30-f5f8-466e-aff9-25556b57fe6d");
-
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         listViewWifi = findViewById(R.id.listViewWifi);
         scanBtn = findViewById(R.id.buttonId);
         saveToDatabaseBtn = findViewById(R.id.saveToDatabeseBtnId);
-        magnetometerSensorValueTv = findViewById(R.id.sensorTvId);
+        //magnetometerSensorValueTv = findViewById(R.id.sensorTvId);
         directionCompassTv = findViewById(R.id.directionCompassId);
         //-----------------------------------------------
 
@@ -417,7 +415,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         float y = Math.round(magnetometerReading[1]);
         float z = Math.round(magnetometerReading[2]);
         magnetometerValue = Math.sqrt((x * x) + (y * y) + (z * z));
-        magnetometerSensorValueTv.setText("Magnetometer Value: " + magnetometerValue + " [uT]" + "\nlast update: " + update);
+        //magnetometerSensorValueTv.setText("Magnetometer Value: " + magnetometerValue + " [uT]" + "\nlast update: " + update);
 
         if (flagMagnetometer) {
             //a flag specifying if still collect data into database
@@ -436,7 +434,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // "rotationMatrix" now has up-to-date information.
         SensorManager.getOrientation(rotationMatrix, orientationAngles);
         // "orientationAngles" now has up-to-date information.
-        azimuth = (float) Math.toDegrees(orientationAngles[0]);
+        azimuth = (int) Math.toDegrees(orientationAngles[0]);
         azimuth = (azimuth + 360) % 360;
         directionCompassTv.setText("Direction value: " + azimuth + "°");
     }
