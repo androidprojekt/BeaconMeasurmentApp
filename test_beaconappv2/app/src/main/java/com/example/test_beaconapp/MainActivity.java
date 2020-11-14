@@ -27,12 +27,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.sql.Struct;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -46,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     //------------------creating variables and objects---------------------
     private ListView listViewBeacon, listViewWifi;
-    private TextView  directionCompassTv, samplesInfoTv;
+    private TextView  directionCompassTv, xCordinateTv, yCordinateTv;
     private Button scanBtn, saveToDatabaseBtn, resetBtn;
     private BluetoothManager mBluetoothManager;
     private BluetoothLeScanner mBluetoothLeScanner;
@@ -65,6 +68,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private DatabaseReference mDatabaseReference;
     private List<ScanFilter> filters;
     private ScanSettings scanSettings;
+    RadioGroup radiogroup;
+    RadioButton radioButton;
+    String directionInDatabase = "UP";
+    int xCordinate=0;
+    int yCordinate=0;
 
     //------------------------------variables needed to compass------------------------------------
     private final float[] accelerometerReading = new float[3];
@@ -90,8 +98,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         listViewWifi = findViewById(R.id.listViewWifi);
         scanBtn = findViewById(R.id.buttonId);
         resetBtn = findViewById(R.id.resetBtnId);
+        xCordinateTv = findViewById(R.id.xCordinateId);
+        yCordinateTv=findViewById(R.id.yCordinateId);
         saveToDatabaseBtn = findViewById(R.id.saveToDatabeseBtnId);
         directionCompassTv = findViewById(R.id.directionCompassId);
+        radiogroup = findViewById(R.id.radioGroupId);
         //-----------------------------------------------
 
         //--------------------Bluetooth and Wifi-------------------
@@ -136,6 +147,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View view) {
                 startSaveToDatabaseFlag = true;
+                String xValueStr =String.valueOf(xCordinateTv.getText());
+                xCordinate=Integer.parseInt(xValueStr);
+
+                String yValueStr =String.valueOf(yCordinateTv.getText());
+                yCordinate=Integer.parseInt(yValueStr);
             }
         });
 
@@ -147,12 +163,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
 
         //-------------------------Database Settings------------------------------------------------
-        mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child(directionInDatabase);
         //------------------------------------------------------------------------------------------
 
         //--------------------Settings and filters for scanning bluetooth devices-------------------
         String[] peripheralAddresses = new String[]{"C6:40:D6:9C:59:7E", "E8:D4:18:0D:DB:37", "DB:A8:FF:3E:95:79",
-                 "D6:2E:C2:40:FD:03","DB:A8:FF:3E:95:79","F7:8B:72:B7:42:C4", "C1:90:8E:4B:16:E5"};
+                 "D6:2E:C2:40:FD:03","F7:8B:72:B7:42:C4", "C1:90:8E:4B:16:E5"};
         //Beacon F7:8B:72:B7:42:C4 jest chyba uszkodzony
         filters = null;
         if (peripheralAddresses != null) {
@@ -167,9 +183,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         scanSettings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                .setMatchMode(ScanSettings.MATCH_MODE_STICKY)
                 .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
-                .setReportDelay(0L)
+                .setReportDelay(0)
                 .build();
 
     }
@@ -182,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         @Override
         public void run() {
             mBluetoothLeScanner.stopScan(scanCallback);
-            mHandler.postDelayed(BLEstartScan, 100);
+            mHandler.postDelayed(BLEstartScan, 1);
         }
     };
 
@@ -217,14 +233,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //a flag specifying if still collect data into database
                 if (wifiList.get(0).getSamplesIterator() == numberOfSamples) {
                     wifiList.get(0).setSavingSamples(false);
-                    //Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
+                    //T).show();
                     String str = "av of: "+ wifiList.get(0).getMacAdress()+": ";
                     double average = averageOfList(wifiList.get(0).getSamplesTab());
+                    String temp = xCordinate +"," + yCordinate;
+                    mDatabaseReference.child(temp).child(wifiList.get(0).getMacAdress()).setValue(average);
                     Log.d("AVERAGE" ,str+average);
+                    Toast.makeText(getApplicationContext(), "Wifi samples upload success!", Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    mDatabaseReference.child(wifiList.get(0).getMacAdress()).
-                            child(String.valueOf(wifiList.get(0).getSamplesIterator())).setValue(wifiList.get(0).getRssi());
+                    //mDatabaseReference.child(wifiList.get(0).getMacAdress()).
+                           // child(String.valueOf(wifiList.get(0).getSamplesIterator())).setValue(wifiList.get(0).getRssi());
                     wifiList.get(0).addToTheSamplesTab(wifiList.get(0).getRssi());
                     wifiList.get(0).setSamplesIterator();
                 }
@@ -264,9 +283,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                             String str = "av of: "+ transmitter.getMacAdress()+": ";
                                             double average = averageOfList(transmitter.getSamplesTab());
                                             Log.d("AVERAGE" ,str+average);
+                                            String temp = xCordinate +"," + yCordinate;
+                                            mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
+                                            Toast.makeText(getApplicationContext(), "Beacons samples upload success!", Toast.LENGTH_SHORT).show();
                                         }
                                         else {
-                                            mDatabaseReference.child(result.getDevice().getAddress()).child(String.valueOf(transmitter.getSamplesIterator())).setValue(rssi);
+                                            //mDatabaseReference.child(result.getDevice().getAddress()).child(String.valueOf(transmitter.getSamplesIterator())).setValue(rssi);
                                             transmitter.addToTheSamplesTab(rssi);
                                             transmitter.setSamplesIterator();
                                         }
@@ -366,10 +388,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             tx.clearSamplesIterator();
             tx.setSavingSamples(true);
         }
-
         wifiList.get(0).clearSamplesIterator();
         wifiList.get(0).clearTheSamplesTab();
         wifiList.get(0).setSavingSamples(true);
     }
 
+    public void checkRadioButton(View view) {
+        int radioId = radiogroup.getCheckedRadioButtonId();
+        radioButton= findViewById(radioId);
+        directionInDatabase= String.valueOf(radioButton.getText());
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child(directionInDatabase);
+    }
 }
