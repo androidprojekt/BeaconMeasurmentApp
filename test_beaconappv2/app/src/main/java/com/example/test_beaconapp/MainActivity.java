@@ -46,43 +46,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     //------------------creating variables and objects---------------------
     private ListView listViewBeacon, listViewWifi;
-    TextView magnetometerSensorValueTv, directionCompassTv;
+    private TextView  directionCompassTv;
     private Button scanBtn, saveToDatabaseBtn;
     private BluetoothManager mBluetoothManager;
-    BluetoothLeScanner mBluetoothLeScanner;
+    private BluetoothLeScanner mBluetoothLeScanner;
+    private BluetoothAdapter mBlueToothAdapter;
     private Context context;
     private Handler mHandler = new Handler();
     private ArrayList<Transmitter> beaconList, wifiList;
-    private BluetoothAdapter mBlueToothAdapter;
     private Calendar calendar;
     private SimpleDateFormat simpleDateFormat;
     private WifiInfo wifiInfo;
     private WifiManager wifiManager;
     private BeaconAndWifiListAdapter adapterBle, adapterWifi;
     static public SensorManager mSensorManager;
-    static List<Sensor> SensorList;
-    private Sensor magneticFieldSensor;
-    double magnetometerValue;
+    private Boolean startSaveToDatabaseFlag = false;
+    private int numberOfSamples = 20; //max number of samples in database and iterators
+    private DatabaseReference mDatabaseReference;
+    private List<ScanFilter> filters;
+    private ScanSettings scanSettings;
 
-    //-----------------------------variables used to autoincrement in database--------------------
-    long maxid = 0;
-    long maxidWifi = 0;
-    long maxidbeacon2 = 0;
-    long maxidMagnetometer = 0;
-    //--------------------------------------------------------------------------------------------
-    //------------------a flags specifying if still collect data into database--------------------
-    Boolean flagMagnetometer = false;
-    Boolean flagWifi = false;
-    Boolean flagBle = false;
-    Boolean flagBle2 = false;
-    //--------------------------------------------------------------------------------------------
-    //-----------------------------max number of samples in database and iterators----------------
-    int numberOfSamples = 200;
-    int magnetometerDatabaseIterator = 0;
-    int wifiDatabaseIterator = 0;
-    int bleDatabaseIterator = 0;
-    int ble2DatabaseIterator = 0;
-    //---------------------------------------------------------------------------------------------
     //------------------------------variables needed to compass------------------------------------
     private final float[] accelerometerReading = new float[3];
     private final float[] magnetometerReading = new float[3];
@@ -91,16 +74,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private final float[] orientationAngles = new float[3];
     //---------------------------------------------------------------------------------------------
 
-    DatabaseReference beaconReference;
-    DatabaseReference beaconReference2;
-    DatabaseReference magnetometerReference;
-    DatabaseReference wifiReference;
-    DatabaseReference mDatabaseReference;
 //---------------------------------------------------------------------------
 
-    List<ScanFilter> filters;
-    ScanSettings scanSettings;
-    int beacon1Array[];
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -115,7 +90,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         listViewWifi = findViewById(R.id.listViewWifi);
         scanBtn = findViewById(R.id.buttonId);
         saveToDatabaseBtn = findViewById(R.id.saveToDatabeseBtnId);
-        //magnetometerSensorValueTv = findViewById(R.id.sensorTvId);
         directionCompassTv = findViewById(R.id.directionCompassId);
         //-----------------------------------------------
 
@@ -129,15 +103,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         adapterBle = new BeaconAndWifiListAdapter(context, R.layout.adapter_view_layout, beaconList);
         adapterWifi = new BeaconAndWifiListAdapter(context, R.layout.adapter_view_layout, wifiList);
         wifiInfo = wifiManager.getConnectionInfo(); //actual connected AP
-        Transmitter transmitterWifi = new Transmitter(wifiInfo.getMacAddress(), simpleDateFormat.format(calendar.getTime()), wifiInfo.getRssi(), "Wifi", wifiInfo.getSSID());
+        Transmitter transmitterWifi = new Transmitter(wifiInfo.getMacAddress(), simpleDateFormat.format(calendar.getTime()),
+                wifiInfo.getRssi(), "Wifi", wifiInfo.getSSID());
         wifiList.add(transmitterWifi);
         listViewWifi.setAdapter(adapterWifi);
         //---------------------------------------------------------
 
         //-----------------------Sensor----------------------------
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        SensorList = mSensorManager.getSensorList(Sensor.TYPE_MAGNETIC_FIELD);
-        magneticFieldSensor = SensorList.get(0);
         //----------------------------------------------------------
 
         //-------------------------PERMISSIONS-------------------------------
@@ -161,23 +134,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         saveToDatabaseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                flagBle = true;
+                startSaveToDatabaseFlag = true;
             }
         });
 
         //-------------------------Database Settings------------------------------------------------
-
-        beaconReference = FirebaseDatabase.getInstance().getReference().child("beacon1 Values");
-        beaconReference2 = FirebaseDatabase.getInstance().getReference().child("beacon2 Values");
-        wifiReference = FirebaseDatabase.getInstance().getReference().child("wifi Values");
-        magnetometerReference = FirebaseDatabase.getInstance().getReference().child("Magnetometer Values");
         mDatabaseReference = FirebaseDatabase.getInstance().getReference();
         //------------------------------------------------------------------------------------------
 
         //--------------------Settings and filters for scanning bluetooth devices-------------------
         String[] peripheralAddresses = new String[]{"C6:40:D6:9C:59:7E", "E8:D4:18:0D:DB:37", "DB:A8:FF:3E:95:79",
-                "C9:52:36:05:C4:12", "78:BD:BC:70:77:1F"};
-// Build filters list
+                "C9:52:36:05:C4:12", "78:BD:BC:70:77:1F", "D6:2E:C2:40:FD:03","DB:A8:FF:3E:95:79","F7:8B:72:B7:42:C4",
+        "C1:90:8E:4B:16:E5"};
         filters = null;
         if (peripheralAddresses != null) {
             filters = new ArrayList<>();
@@ -195,11 +163,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
                 .setReportDelay(0L)
                 .build();
-/*
-        int myArray[] = { 1, 2, 3 };
-        Double average = Arrays.stream(myArray).average().getAsDouble();
-        Toast.makeText(getApplicationContext(),"average: "+ average,Toast.LENGTH_LONG).show();
- */
+
     }
     //----------------------------------------------------------------------------------------------
 
@@ -209,7 +173,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
-            //mBlueToothAdapter.stopLeScan(mLeScanCallback); old solution
             mBluetoothLeScanner.stopScan(scanCallback);
             mHandler.postDelayed(BLEstartScan, 100);
         }
@@ -219,8 +182,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
-            //start scanning Beacons or BLE devices
-            //mBlueToothAdapter.startLeScan(mLeScanCallback); old solution
             mBluetoothLeScanner.startScan(filters, scanSettings, scanCallback);
             mHandler.postDelayed(BLEstopScan, 6000);
         }
@@ -243,14 +204,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         wifiList.get(0).setRssi(wifiInfo.getRssi());
         wifiList.get(0).setLastUpdate(simpleDateFormat.format(calendar.getTime()));
 
-        if (flagWifi) {
-            //a flag specifying if still collect data into database
-            if (wifiDatabaseIterator == numberOfSamples) {
-                flagWifi = false;
-                Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
+        if (startSaveToDatabaseFlag) {
+            if (wifiList.get(0).isSavingSamples()) {
+                //a flag specifying if still collect data into database
+                if (wifiList.get(0).getSamplesIterator() == numberOfSamples) {
+                    wifiList.get(0).setSavingSamples(false);
+                    Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
+                    String str = "av of: "+ wifiList.get(0).getMacAdress()+": ";
+                    double average = averageOfList(wifiList.get(0).getSamplesTab());
+                    Log.d("AVERAGE" ,str+average);
+                }
+                else {
+                    mDatabaseReference.child(wifiList.get(0).getMacAdress()).
+                            child(String.valueOf(wifiList.get(0).getSamplesIterator())).setValue(wifiList.get(0).getRssi());
+                    wifiList.get(0).addToTheSamplesTab(wifiList.get(0).getRssi());
+                    wifiList.get(0).setSamplesIterator();
+                }
             }
-            wifiReference.child(String.valueOf(++maxidWifi)).setValue(wifiInfo.getRssi());
-            wifiDatabaseIterator++;
         }
         listViewWifi.setAdapter(adapterWifi);
     }
@@ -279,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                 transmitter.setRssi(rssi);
                                 transmitter.setLastUpdate(simpleDateFormat.format(calendar.getTime()));
 
-                                if (flagBle) {
+                                if (startSaveToDatabaseFlag) {
                                     if (transmitter.isSavingSamples()) {
                                         if (transmitter.getSamplesIterator() == 50) {
                                             transmitter.setSavingSamples(false);
@@ -290,7 +260,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                         }
                                         else {
                                             mDatabaseReference.child(result.getDevice().getAddress()).child(String.valueOf(transmitter.getSamplesIterator())).setValue(rssi);
-                                            //beaconReference.child(String.valueOf(++maxid)).setValue(rssi);
                                             transmitter.addToTheSamplesTab(rssi);
                                             transmitter.setSamplesIterator();
                                         }
@@ -310,138 +279,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         beaconList.add(transmitter);
                         listViewBeacon.setAdapter(adapterBle);
                     }
-                    /*
-                    if (beaconList.size() == 1) {
-                        //we limit the list to two items (because we have only 2 beacons)
-                        if (beaconList.get(0).getMacAdress().contains(device.getAddress())) {
-                            //overwriting the values of a given beacon
-                            beaconList.get(0).setLastUpdate(simpleDateFormat.format(calendar.getTime()));
-                            beaconList.get(0).setRssi(rssi);
-
-                            if (flagBle) {
-                                //a flag specifying if still collect data into database
-                                if (bleDatabaseIterator == numberOfSamples) {
-                                    flagBle = false;
-                                    Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
-                                }
-                                beaconReference.child(String.valueOf(++maxid)).setValue(rssi);
-                                bleDatabaseIterator++;
-                            }
-                        }
-                        listViewBeacon.setAdapter(adapterBle);
-
-                    } else {
-                        //filling the list with two beacons
-
-                        Transmitter transmitter = new Transmitter(device.getAddress(), simpleDateFormat.format(calendar.getTime()), rssi, "Beacon");
-                        beaconList.add(transmitter);
-
-                        listViewBeacon.setAdapter(adapterBle);
-                    }*/
                 }
             });
-
         }
     };
 
-    //onlescan
- /* // Old Solution for scanning bluetooth devices
-    private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
 
-        @Override
-        public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-
-
-            final BluetoothLeDevice deviceLe = new BluetoothLeDevice(device, rssi, scanRecord, System.currentTimeMillis());  //found BLE device (beacon, phone or something else)
-            context = getApplicationContext();
-
-            if (BeaconUtils.getBeaconType(deviceLe) == BeaconType.IBEACON) {
-                //we only consider beacons
-                final IBeaconDevice iBeacon = new IBeaconDevice(deviceLe);
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        calendar = Calendar.getInstance();
-                        if (beaconList.size() == 2) {
-                            //we limit the list to two items (because we have only 2 beacons)
-                            if (beaconList.get(0).getMacAdress().contains(iBeacon.getAddress())) {
-                                //overwriting the values of a given beacon
-                                beaconList.get(0).setLastUpdate(simpleDateFormat.format(calendar.getTime()));
-                                beaconList.get(0).setRssi(iBeacon.getRssi());
-
-                                if(flagBle) {
-                                    //a flag specifying if still collect data into database
-                                    if(bleDatabaseIterator == numberOfSamples) {
-                                        flagBle = false;
-                                        Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
-                                    }
-                                    beaconReference.child(String.valueOf(++maxid)).setValue(iBeacon.getRssi());
-                                    bleDatabaseIterator++;
-                                             }
-                            } else {
-                                //overwriting the value of a given beacon
-                                beaconList.get(1).setLastUpdate(simpleDateFormat.format(calendar.getTime()));
-                                beaconList.get(1).setRssi(iBeacon.getRssi());
-                                if(flagBle2) {
-                                    //a flag specifying if still collect data into database
-                                    if(ble2DatabaseIterator == numberOfSamples) {
-                                        flagBle2 = false;
-                                        Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
-                                    }
-                                    beaconReference2.child(String.valueOf(++maxidbeacon2)).setValue(iBeacon.getRssi());
-                                    ble2DatabaseIterator++;
-                                }
-                            }
-                            listViewBeacon.setAdapter(adapterBle);
-
-                        } else {
-                            //filling the list with two beacons
-
-                            Transmitter transmitter = new Transmitter(iBeacon.getAddress(), simpleDateFormat.format(calendar.getTime()), iBeacon.getRssi(), "Beacon");
-                            beaconList.add(transmitter);
-                            Log.i("TEST_UUID", "uuid: " + iBeacon.getUUID());
-
-                            if (beaconList.size() == 2 && beaconList.get(0).getMacAdress().contains(transmitter.getMacAdress())) {
-                                //preventing the repetition of beacons on the list
-                                beaconList.remove(1);
-                            }
-                            listViewBeacon.setAdapter(adapterBle);
-                        }
-                    }
-                });
-            }
-        }
-    };
-*/
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
 
-        String update = simpleDateFormat.format(calendar.getTime());
-
+        //String update = simpleDateFormat.format(calendar.getTime());
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             System.arraycopy(sensorEvent.values, 0, accelerometerReading,
                     0, accelerometerReading.length);
         } else if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             System.arraycopy(sensorEvent.values, 0, magnetometerReading,
                     0, magnetometerReading.length);
-        }
-
-        float x = Math.round(magnetometerReading[0]);
-        float y = Math.round(magnetometerReading[1]);
-        float z = Math.round(magnetometerReading[2]);
-        magnetometerValue = Math.sqrt((x * x) + (y * y) + (z * z));
-        //magnetometerSensorValueTv.setText("Magnetometer Value: " + magnetometerValue + " [uT]" + "\nlast update: " + update);
-
-        if (flagMagnetometer) {
-            //a flag specifying if still collect data into database
-            if (magnetometerDatabaseIterator == numberOfSamples) {
-                flagMagnetometer = false;
-                Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
-            }
-            magnetometerReference.child(String.valueOf(++maxidMagnetometer)).setValue(magnetometerValue);
-            magnetometerDatabaseIterator++;
         }
 
         // Update rotation matrix, which is needed to update orientation angles.
