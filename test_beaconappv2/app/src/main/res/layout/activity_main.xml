@@ -50,17 +50,6 @@
             android:layout_marginBottom="0dp"
             android:text="Direction: " />
 
-        <TextView
-            android:id="@+id/sadas"
-            android:layout_width="153dp"
-            android:layout_height="125dp"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="11dp"
-            android:layout_marginRight="130dp"
-            android:layout_marginBottom="0dp"
-            android:lines="7"
-            android:text="beacon 1 \nbeacon2 \nbeacon3 \nbeacon4 \nbeacon5 \nbeacon6 \nwifi" />
-
         <Button
             android:id="@+id/saveToDatabeseBtnId"
             android:layout_width="147dp"

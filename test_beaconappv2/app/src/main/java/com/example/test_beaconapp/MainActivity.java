@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     //------------------creating variables and objects---------------------
     private ListView listViewBeacon, listViewWifi;
-    private TextView  directionCompassTv;
+    private TextView  directionCompassTv, samplesInfoTv;
     private Button scanBtn, saveToDatabaseBtn;
     private BluetoothManager mBluetoothManager;
     private BluetoothLeScanner mBluetoothLeScanner;
@@ -144,8 +144,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //--------------------Settings and filters for scanning bluetooth devices-------------------
         String[] peripheralAddresses = new String[]{"C6:40:D6:9C:59:7E", "E8:D4:18:0D:DB:37", "DB:A8:FF:3E:95:79",
-                "C9:52:36:05:C4:12", "78:BD:BC:70:77:1F", "D6:2E:C2:40:FD:03","DB:A8:FF:3E:95:79","F7:8B:72:B7:42:C4",
-        "C1:90:8E:4B:16:E5"};
+                 "D6:2E:C2:40:FD:03","DB:A8:FF:3E:95:79","F7:8B:72:B7:42:C4", "C1:90:8E:4B:16:E5"};
+        //Beacon F7:8B:72:B7:42:C4 jest chyba uszkodzony
         filters = null;
         if (peripheralAddresses != null) {
             filters = new ArrayList<>();
@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 //a flag specifying if still collect data into database
                 if (wifiList.get(0).getSamplesIterator() == numberOfSamples) {
                     wifiList.get(0).setSavingSamples(false);
-                    Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
                     String str = "av of: "+ wifiList.get(0).getMacAdress()+": ";
                     double average = averageOfList(wifiList.get(0).getSamplesTab());
                     Log.d("AVERAGE" ,str+average);
@@ -251,9 +251,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                                 if (startSaveToDatabaseFlag) {
                                     if (transmitter.isSavingSamples()) {
-                                        if (transmitter.getSamplesIterator() == 50) {
+                                        if (transmitter.getSamplesIterator() == numberOfSamples) {
                                             transmitter.setSavingSamples(false);
-                                            Toast.makeText(getApplicationContext(), "STOP", Toast.LENGTH_SHORT).show();
                                             String str = "av of: "+ transmitter.getMacAdress()+": ";
                                             double average = averageOfList(transmitter.getSamplesTab());
                                             Log.d("AVERAGE" ,str+average);
@@ -349,6 +348,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         average = (double)sum/(list.size());
         return average;
     }
+
 
 
 }
