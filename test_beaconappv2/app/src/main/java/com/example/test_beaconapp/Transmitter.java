@@ -112,4 +112,6 @@ public class Transmitter {
     public void setSamplesIterator() {
         this.samplesIterator++;
     }
+
+    public void clearSamplesIterator(){this.samplesIterator=0;}
 }

@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     //------------------creating variables and objects---------------------
     private ListView listViewBeacon, listViewWifi;
     private TextView  directionCompassTv, samplesInfoTv;
-    private Button scanBtn, saveToDatabaseBtn;
+    private Button scanBtn, saveToDatabaseBtn, resetBtn;
     private BluetoothManager mBluetoothManager;
     private BluetoothLeScanner mBluetoothLeScanner;
     private BluetoothAdapter mBlueToothAdapter;
@@ -89,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         listViewBeacon = findViewById(R.id.listView);
         listViewWifi = findViewById(R.id.listViewWifi);
         scanBtn = findViewById(R.id.buttonId);
+        resetBtn = findViewById(R.id.resetBtnId);
         saveToDatabaseBtn = findViewById(R.id.saveToDatabeseBtnId);
         directionCompassTv = findViewById(R.id.directionCompassId);
         //-----------------------------------------------
@@ -135,6 +136,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             @Override
             public void onClick(View view) {
                 startSaveToDatabaseFlag = true;
+            }
+        });
+
+        resetBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+            resettingFunction();
             }
         });
 
@@ -349,6 +357,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return average;
     }
 
+    public void resettingFunction()
+    {
+        startSaveToDatabaseFlag=false;
+        for(Transmitter tx: beaconList)
+        {
+            tx.clearTheSamplesTab();
+            tx.clearSamplesIterator();
+            tx.setSavingSamples(true);
+        }
 
+        wifiList.get(0).clearSamplesIterator();
+        wifiList.get(0).clearTheSamplesTab();
+        wifiList.get(0).setSavingSamples(true);
+    }
 
 }
