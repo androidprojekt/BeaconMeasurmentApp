@@ -23,7 +23,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="385dp">
+        android:layout_marginTop="380dp">
 
         <ListView
             android:id="@+id/listViewWifi"
@@ -40,13 +40,14 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="450dp">
+        android:layout_marginTop="440dp">
 
         <TextView
             android:id="@+id/directionCompassId"
             android:layout_width="200dp"
-            android:layout_height="40dp"
+            android:layout_height="30dp"
             android:layout_marginEnd="145dp"
+            android:layout_marginTop="0dp"
             android:layout_marginBottom="0dp"
             android:text="Direction: " />
 
@@ -82,73 +83,66 @@
 
         <TextView
             android:layout_width="150dp"
-            android:layout_height="35dp"
-            android:layout_above="@+id/buttonId"
-            android:layout_marginBottom="84dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="30dp"
             android:text="x,y cordinate:"
-            android:textSize="20sp" />
+            android:textSize="12sp" />
 
         <EditText
             android:id="@+id/xCordinateId"
             android:layout_width="150dp"
             android:layout_height="35dp"
-            android:layout_above="@+id/buttonId"
-            android:layout_marginBottom="46dp"
+            android:layout_marginTop="60dp"
             android:hint="x cordinate: "
-            android:text="0"
             android:inputType="number"
+            android:text="0"
             android:textSize="12sp" />
 
         <EditText
             android:id="@+id/yCordinateId"
             android:layout_width="150dp"
             android:layout_height="35dp"
-            android:layout_above="@+id/buttonId"
-            android:layout_marginBottom="8dp"
+            android:layout_marginTop="100dp"
             android:hint="y cordinate: "
-            android:text="0"
             android:inputType="number"
+            android:text="0"
             android:textSize="12sp" />
 
         <RadioGroup
             android:id="@+id/radioGroupId"
             android:layout_width="100dp"
             android:layout_height="139dp"
-            android:layout_above="@+id/resetBtnId"
             android:layout_alignParentEnd="true"
-            android:layout_marginEnd="6dp"
-            android:layout_marginBottom="19dp"
-            >
+            android:layout_marginEnd="28dp">
 
             <RadioButton
                 android:id="@+id/upRadioId"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="UP"
-                android:onClick="checkRadioButton"/>
+                android:onClick="checkRadioButton"
+                android:text="UP" />
 
             <RadioButton
                 android:id="@+id/rightRadioId"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="RIGHT"
-                android:onClick="checkRadioButton"/>
+                android:onClick="checkRadioButton"
+                android:text="RIGHT" />
 
             <RadioButton
                 android:id="@+id/downRadioId"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="DOWN"
-                android:onClick="checkRadioButton"/>
+                android:onClick="checkRadioButton"
+                android:text="DOWN" />
 
             <RadioButton
                 android:id="@+id/leftRadioId"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="LEFT"
-                android:onClick="checkRadioButton"/>
+                android:onClick="checkRadioButton"
+                android:text="LEFT" />
         </RadioGroup>
-
 
 
     </RelativeLayout>
