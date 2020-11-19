@@ -61,7 +61,7 @@ public class BeaconAndWifiListAdapter extends ArrayAdapter<Transmitter> {
 
     public int getTvColor(int samples) {
         int color = Color.RED;
-        if (samples == 200) {
+        if (samples == 20) {
             color = Color.GREEN;
         }
         return color;
