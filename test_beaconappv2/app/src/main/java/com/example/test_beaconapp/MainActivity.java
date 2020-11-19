@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private BeaconAndWifiListAdapter adapterBle, adapterWifi;
     static public SensorManager mSensorManager;
     private Boolean startSaveToDatabaseFlag = false;
-    private int numberOfSamples = 20; //max number of samples in database and iterators
+    private int numberOfSamples = 200; //max number of samples in database and iterators
     private DatabaseReference mDatabaseReference;
     private List<ScanFilter> filters;
     private ScanSettings scanSettings;
@@ -217,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         public void run() {
             checkWifi();
             //This line will continuously call this Runnable with 1000 milliseconds gap
-            mHandler.postDelayed(wifiScanner, 1000);
+            mHandler.postDelayed(wifiScanner, 500);
         }
     };
 //--------------------------------------------------------------------------------------------------
@@ -237,8 +237,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     String str = "av of: "+ wifiList.get(0).getMacAdress()+": ";
                     double average = averageOfList(wifiList.get(0).getSamplesTab());
                     String temp = xCordinate +"," + yCordinate;
-                    mDatabaseReference.child(temp).child(wifiList.get(0).getMacAdress()).setValue(average);
+                    //mDatabaseReference.child(temp).child("WIFI").setValue(average);
                     Log.d("AVERAGE" ,str+average);
+                    int iterator=0;
+                    for(Integer rssi : wifiList.get(0).getSamplesTab())
+                    {
+                        mDatabaseReference.child(temp).child("WIFI").child(String.valueOf(iterator++)).setValue(rssi);
+                    }
                     Toast.makeText(getApplicationContext(), "Wifi samples upload success!", Toast.LENGTH_SHORT).show();
                 }
                 else {
@@ -284,7 +289,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                             double average = averageOfList(transmitter.getSamplesTab());
                                             Log.d("AVERAGE" ,str+average);
                                             String temp = xCordinate +"," + yCordinate;
-                                            mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
+                                            //mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
+                                            int iterator2=0;
+                                            for(Integer rssi : transmitter.getSamplesTab())
+                                            {
+                                                mDatabaseReference.child(temp).child(transmitter.getMacAdress()).child(String.valueOf(iterator2++)).setValue(rssi);
+                                            }
+
                                             Toast.makeText(getApplicationContext(), "Beacons samples upload success!", Toast.LENGTH_SHORT).show();
                                         }
                                         else {
