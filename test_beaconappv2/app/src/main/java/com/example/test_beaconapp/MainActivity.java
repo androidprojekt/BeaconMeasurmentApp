@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private BeaconAndWifiListAdapter adapterBle, adapterWifi;
     static public SensorManager mSensorManager;
     private Boolean startSaveToDatabaseFlag = false;
-    private int numberOfSamples = 20; //max number of samples in database and iterators
+    private int numberOfSamples = 150; //max number of samples in database and iterators
     private DatabaseReference mDatabaseReference;
     private List<ScanFilter> filters;
     private ScanSettings scanSettings;
@@ -163,12 +163,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
 
         //-------------------------Database Settings------------------------------------------------
-        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child(directionInDatabase);
+        // dodano child fluktuacje - zapis 150 próbek do bazy z każdego z beaconów i wifi
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child("fluktuacja").child(directionInDatabase);
         //------------------------------------------------------------------------------------------
 
         //--------------------Settings and filters for scanning bluetooth devices-------------------
         String[] peripheralAddresses = new String[]{"C6:40:D6:9C:59:7E", "E8:D4:18:0D:DB:37", "DB:A8:FF:3E:95:79",
-                 "D6:2E:C2:40:FD:03","F7:8B:72:B7:42:C4", "C1:90:8E:4B:16:E5"};
+                 "D6:2E:C2:40:FD:03","F7:8B:72:B7:42:C4", "C1:90:8E:4B:16:E5", "EF:F7:2A:DC:14:03", "FC:02:5B:0D:05:60",
+                "DD:BC:33:F9:EE:56"};
+
         //Beacon F7:8B:72:B7:42:C4 jest chyba uszkodzony
         filters = null;
         if (peripheralAddresses != null) {
@@ -236,11 +239,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     String str = "av of: "+ wifiList.get(0).getMacAdress()+": ";
                     double average = averageOfList(wifiList.get(0).getSamplesTab());
                     String temp = xCordinate +"," + yCordinate;
-                    mDatabaseReference.child(temp).child("WIFI").setValue(average);
+                    //mDatabaseReference.child(temp).child("WIFI").setValue(average);
                     Log.d("AVERAGE" ,str+average);
                     Toast.makeText(getApplicationContext(), "Wifi samples upload success!", Toast.LENGTH_SHORT).show();
                 }
                 else {
+                    String temp = xCordinate +"," + yCordinate;
+                    // ZAPISYWANIE 150 PRÓBEK Z WIFI I BEACONÓW
+                    mDatabaseReference.child("WIFI").child(String.valueOf(wifiList.get(0).getSamplesIterator())).setValue(wifiList.get(0).getRssi());
                     wifiList.get(0).addToTheSamplesTab(wifiList.get(0).getRssi());
                     wifiList.get(0).setSamplesIterator();
                 }
@@ -258,6 +264,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             super.onScanResult(callbackType, result);
 
             final BluetoothDevice device = result.getDevice();
+
             final int rssi = result.getRssi();
 
             //Toast.makeText(getApplicationContext(), "Number of results" +uuidList.size(), Toast.LENGTH_SHORT).show();
@@ -274,17 +281,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                 transmitter.setLastUpdate(simpleDateFormat.format(calendar.getTime()));
 
                                 if (startSaveToDatabaseFlag) {
+                                    Log.d("Found device " ,device.getAddress());
                                     if (transmitter.isSavingSamples()) {
                                         if (transmitter.getSamplesIterator() == numberOfSamples) {
                                             transmitter.setSavingSamples(false);
                                             String str = "av of: "+ transmitter.getMacAdress()+": ";
                                             double average = averageOfList(transmitter.getSamplesTab());
-                                            Log.d("AVERAGE" ,str+average);
+                                            Log.d("end " ,str+average);
                                             String temp = xCordinate +"," + yCordinate;
-                                            mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
+                                            //mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
                                             Toast.makeText(getApplicationContext(), "Beacons samples upload success!", Toast.LENGTH_SHORT).show();
+
                                         }
                                         else {
+                                            String temp = xCordinate +"," + yCordinate;
+                                            mDatabaseReference.child(transmitter.getMacAdress()).child(String.valueOf(transmitter.getSamplesIterator())).setValue(rssi);
                                             transmitter.addToTheSamplesTab(rssi);
                                             transmitter.setSamplesIterator();
                                         }
@@ -393,6 +404,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int radioId = radiogroup.getCheckedRadioButtonId();
         radioButton= findViewById(radioId);
         directionInDatabase= String.valueOf(radioButton.getText());
-        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child(directionInDatabase);
+        // Zmiana na potrzebę badania fluktuacji - do bazy danych zapisywane jest 150 próbek w child fluktuacje
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child("fluktuacja").child(directionInDatabase);
     }
 }
