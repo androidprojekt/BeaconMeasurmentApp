@@ -164,7 +164,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //-------------------------Database Settings------------------------------------------------
         // dodano child fluktuacje - zapis 150 próbek do bazy z każdego z beaconów i wifi
-        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child("fluktuacja").child(directionInDatabase);
+        //mDatabaseReference = FirebaseDatabase.getInstance().getReference().child("fluktuacja").child(directionInDatabase);
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child(directionInDatabase);
         //------------------------------------------------------------------------------------------
 
         //--------------------Settings and filters for scanning bluetooth devices-------------------
@@ -239,14 +240,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     String str = "av of: "+ wifiList.get(0).getMacAdress()+": ";
                     double average = averageOfList(wifiList.get(0).getSamplesTab());
                     String temp = xCordinate +"," + yCordinate;
-                    //mDatabaseReference.child(temp).child("WIFI").setValue(average);
+                    mDatabaseReference.child(temp).child("WIFI").setValue(average);
                     Log.d("AVERAGE" ,str+average);
                     Toast.makeText(getApplicationContext(), "Wifi samples upload success!", Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    String temp = xCordinate +"," + yCordinate;
+                    //String temp = xCordinate +"," + yCordinate;
                     // ZAPISYWANIE 150 PRÓBEK Z WIFI I BEACONÓW
-                    mDatabaseReference.child("WIFI").child(String.valueOf(wifiList.get(0).getSamplesIterator())).setValue(wifiList.get(0).getRssi());
+                    //mDatabaseReference.child("WIFI").child(String.valueOf(wifiList.get(0).getSamplesIterator())).setValue(wifiList.get(0).getRssi());
                     wifiList.get(0).addToTheSamplesTab(wifiList.get(0).getRssi());
                     wifiList.get(0).setSamplesIterator();
                 }
@@ -289,13 +290,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                             double average = averageOfList(transmitter.getSamplesTab());
                                             Log.d("end " ,str+average);
                                             String temp = xCordinate +"," + yCordinate;
-                                            //mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
+                                            mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
                                             Toast.makeText(getApplicationContext(), "Beacons samples upload success!", Toast.LENGTH_SHORT).show();
 
                                         }
                                         else {
-                                            String temp = xCordinate +"," + yCordinate;
-                                            mDatabaseReference.child(transmitter.getMacAdress()).child(String.valueOf(transmitter.getSamplesIterator())).setValue(rssi);
+                                            //String temp = xCordinate +"," + yCordinate;
+                                            //mDatabaseReference.child(transmitter.getMacAdress()).child(String.valueOf(transmitter.getSamplesIterator())).setValue(rssi);
                                             transmitter.addToTheSamplesTab(rssi);
                                             transmitter.setSamplesIterator();
                                         }
@@ -405,6 +406,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         radioButton= findViewById(radioId);
         directionInDatabase= String.valueOf(radioButton.getText());
         // Zmiana na potrzebę badania fluktuacji - do bazy danych zapisywane jest 150 próbek w child fluktuacje
-        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child("fluktuacja").child(directionInDatabase);
+        //mDatabaseReference = FirebaseDatabase.getInstance().getReference().child("fluktuacja").child(directionInDatabase);
+        mDatabaseReference = FirebaseDatabase.getInstance().getReference().child(directionInDatabase);
     }
 }
