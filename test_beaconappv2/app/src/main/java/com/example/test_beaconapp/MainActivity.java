@@ -223,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         public void run() {
             checkWifi();
             //This line will continuously call this Runnable with 1000 milliseconds gap
-            mHandler.postDelayed(wifiScanner, 500);
+            mHandler.postDelayed(wifiScanner, 200);
         }
     };
 //--------------------------------------------------------------------------------------------------
