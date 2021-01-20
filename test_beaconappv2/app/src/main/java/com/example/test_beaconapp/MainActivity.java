@@ -73,7 +73,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     String directionInDatabase = "UP";
     int xCordinate=0;
     int yCordinate=0;
-
+    int beaconIterator=0;
+    TextView beaconIteratorTv;
     //------------------------------variables needed to compass------------------------------------
     private final float[] accelerometerReading = new float[3];
     private final float[] magnetometerReading = new float[3];
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         saveToDatabaseBtn = findViewById(R.id.saveToDatabeseBtnId);
         directionCompassTv = findViewById(R.id.directionCompassId);
         radiogroup = findViewById(R.id.radioGroupId);
+        beaconIteratorTv = findViewById(R.id.beaconIteratorId);
         //-----------------------------------------------
 
         //--------------------Bluetooth and Wifi-------------------
@@ -291,7 +293,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                             Log.d("end " ,str+average);
                                             String temp = xCordinate +"," + yCordinate;
                                             mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
-                                            Toast.makeText(getApplicationContext(), "Beacons samples upload success!", Toast.LENGTH_SHORT).show();
+                                            //Toast.makeText(getApplicationContext(), "Beacons samples upload success!", Toast.LENGTH_SHORT).show();
+                                            beaconIterator++;
+                                            beaconIteratorTv.setText("iterator: " + beaconIterator);
 
                                         }
                                         else {
@@ -399,6 +403,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         wifiList.get(0).clearSamplesIterator();
         wifiList.get(0).clearTheSamplesTab();
         wifiList.get(0).setSavingSamples(true);
+        beaconIterator=0;
+        beaconIteratorTv.setText("");
     }
 
     public void checkRadioButton(View view) {
