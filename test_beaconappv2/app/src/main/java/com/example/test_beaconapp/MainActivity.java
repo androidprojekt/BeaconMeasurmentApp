@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         adapterWifi = new BeaconAndWifiListAdapter(context, R.layout.adapter_view_layout, wifiList);
 
         wifiInfo = wifiManager.getConnectionInfo(); //actual connected AP
-        Transmitter transmitterWifi = new Transmitter(wifiInfo.getMacAddress(), simpleDateFormat.format(calendar.getTime()),
+        Transmitter transmitterWifi = new Transmitter(simpleDateFormat.format(calendar.getTime()),
                 wifiInfo.getRssi(), "Wifi", wifiInfo.getSSID());
         wifiList.add(transmitterWifi);
         listViewWifi.setAdapter(adapterWifi);

@@ -19,9 +19,8 @@ public class Transmitter {
         this.samplesTab = new ArrayList<>();
         this.samplesIterator=0;
     }
-    public Transmitter (String macAdress, String lastUpdate, int rssi, String type, String name)
+    public Transmitter (String lastUpdate, int rssi, String type, String name)
     {
-        this.macAdress = macAdress;
         this.lastUpdate = lastUpdate;
         this.rssi = rssi;
         this.type = type;
