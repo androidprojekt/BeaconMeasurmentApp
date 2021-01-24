@@ -116,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         wifiList = new ArrayList<>();
         adapterBle = new BeaconAndWifiListAdapter(context, R.layout.adapter_view_layout, beaconList);
         adapterWifi = new BeaconAndWifiListAdapter(context, R.layout.adapter_view_layout, wifiList);
+
         wifiInfo = wifiManager.getConnectionInfo(); //actual connected AP
         Transmitter transmitterWifi = new Transmitter(wifiInfo.getMacAddress(), simpleDateFormat.format(calendar.getTime()),
                 wifiInfo.getRssi(), "Wifi", wifiInfo.getSSID());
@@ -234,6 +235,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         wifiList.get(0).setRssi(wifiInfo.getRssi());
         wifiList.get(0).setLastUpdate(simpleDateFormat.format(calendar.getTime()));
 
+
         if (startSaveToDatabaseFlag) {
             if (wifiList.get(0).isSavingSamples()) {
                 //a flag specifying if still collect data into database
@@ -267,19 +269,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             super.onScanResult(callbackType, result);
 
             final BluetoothDevice device = result.getDevice();
-
             final int rssi = result.getRssi();
-
             //Toast.makeText(getApplicationContext(), "Number of results" +uuidList.size(), Toast.LENGTH_SHORT).show();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     calendar = Calendar.getInstance();
+
+                    boolean newBeacon = true;
                     if (beaconList.size() != 0) {
-                        boolean newBeacon = true;
                         for (Transmitter transmitter : beaconList) {
-                            if (transmitter.macAdress.contains(result.getDevice().getAddress())) {
+                            if (transmitter.getMacAdress().contains(result.getDevice().getAddress())) {
                                 newBeacon = false;
+
+
                                 transmitter.setRssi(rssi);
                                 transmitter.setLastUpdate(simpleDateFormat.format(calendar.getTime()));
 
@@ -309,17 +312,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                                 }
                             }
                         }
-                        if (newBeacon == true) {
-                            Transmitter transmitter = new Transmitter(device.getAddress(), simpleDateFormat.format(calendar.getTime()), rssi, "Beacon");
-                            beaconList.add(transmitter);
-                            //Toast.makeText(getApplicationContext(), "DRUGI ", Toast.LENGTH_SHORT).show();
-                        }
-                        listViewBeacon.setAdapter(adapterBle);
-                    } else {
-                        Transmitter transmitter = new Transmitter(device.getAddress(), simpleDateFormat.format(calendar.getTime()), rssi, "Beacon");
+
+                    } if (newBeacon) {
+                        Transmitter transmitter = new Transmitter(device.getAddress(),
+                                simpleDateFormat.format(calendar.getTime()), rssi, "Beacon");
                         beaconList.add(transmitter);
-                        listViewBeacon.setAdapter(adapterBle);
+                        Toast.makeText(getApplicationContext(),
+                                "New Beacon", Toast.LENGTH_SHORT).show();
                     }
+                    listViewBeacon.setAdapter(adapterBle);
                 }
             });
         }

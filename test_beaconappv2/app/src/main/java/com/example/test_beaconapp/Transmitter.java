@@ -4,16 +4,10 @@ import java.util.ArrayList;
 
 public class Transmitter {
 
-    String macAdress;
-    String lastUpdate;
-    String type;
-    String name;
-    int rssi;
-    boolean savingSamples;
-    ArrayList<Integer> samplesTab;
-    int samplesIterator;
-
-
+    private String macAdress, name, lastUpdate, type;
+    private int rssi, samplesIterator;
+    private boolean savingSamples;
+    private ArrayList<Integer> samplesTab;
 
     public Transmitter(String macAdress, String lastUpdate, int rssi, String type) {
         this.macAdress = macAdress;
@@ -25,8 +19,6 @@ public class Transmitter {
         this.samplesTab = new ArrayList<>();
         this.samplesIterator=0;
     }
-
-
     public Transmitter (String macAdress, String lastUpdate, int rssi, String type, String name)
     {
         this.macAdress = macAdress;
@@ -38,6 +30,8 @@ public class Transmitter {
         this.samplesTab = new ArrayList<>();
         this.samplesIterator=0;
     }
+
+
 
     public void addToTheSamplesTab(int sample)
     {
