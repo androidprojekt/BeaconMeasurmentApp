@@ -64,13 +64,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private BeaconAndWifiListAdapter adapterBle, adapterWifi;
     static public SensorManager mSensorManager;
     private Boolean startSaveToDatabaseFlag = false;
-    private int numberOfSamples = 150; //max number of samples in database and iterators
+    private int numberOfSamples = 150; //how many samples are to be averaged / saved
     private DatabaseReference mDatabaseReference;
     private List<ScanFilter> filters;
     private ScanSettings scanSettings;
     RadioGroup radiogroup;
     RadioButton radioButton;
-    String directionInDatabase = "UP";
+    String directionInDatabase = "UP"; //determine direction
     int xCordinate=0;
     int yCordinate=0;
     int beaconIterator=0;
@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
 
         //-------------------------Database Settings------------------------------------------------
-        // dodano child fluktuacje - zapis 150 próbek do bazy z każdego z beaconów i wifi
+        // saving samples --- or averge of samples
         //mDatabaseReference = FirebaseDatabase.getInstance().getReference().child("fluktuacja").child(directionInDatabase);
         mDatabaseReference = FirebaseDatabase.getInstance().getReference().child(directionInDatabase);
         //------------------------------------------------------------------------------------------
@@ -176,7 +176,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                  "D6:2E:C2:40:FD:03","F7:8B:72:B7:42:C4", "C1:90:8E:4B:16:E5", "EF:F7:2A:DC:14:03", "FC:02:5B:0D:05:60",
                 "DD:BC:33:F9:EE:56"};
 
-        //Beacon F7:8B:72:B7:42:C4 jest chyba uszkodzony
         filters = null;
         if (peripheralAddresses != null) {
             filters = new ArrayList<>();
@@ -223,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         @Override
         public void run() {
             checkWifi();
-            //This line will continuously call this Runnable with 1000 milliseconds gap
+            //This line will continuously call this Runnable with 200 milliseconds gap
             mHandler.postDelayed(wifiScanner, 200);
         }
     };
@@ -245,12 +244,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     double average = averageOfList(wifiList.get(0).getSamplesTab());
                     String temp = xCordinate +"," + yCordinate;
                     mDatabaseReference.child(temp).child("WIFI").setValue(average);
-                    Log.d("AVERAGE" ,str+average);
-                    Toast.makeText(getApplicationContext(), "Wifi samples upload success!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Wifi samples upload success!",
+                            Toast.LENGTH_SHORT).show();
                 }
                 else {
                     //String temp = xCordinate +"," + yCordinate;
-                    // ZAPISYWANIE 150 PRÓBEK Z WIFI I BEACONÓW
+                    // saving samples
                     //mDatabaseReference.child("WIFI").child(String.valueOf(wifiList.get(0).getSamplesIterator())).setValue(wifiList.get(0).getRssi());
                     wifiList.get(0).addToTheSamplesTab(wifiList.get(0).getRssi());
                     wifiList.get(0).setSamplesIterator();
@@ -270,7 +269,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             final BluetoothDevice device = result.getDevice();
             final int rssi = result.getRssi();
-            //Toast.makeText(getApplicationContext(), "Number of results" +uuidList.size(), Toast.LENGTH_SHORT).show();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -281,19 +279,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         for (Transmitter transmitter : beaconList) {
                             if (transmitter.getMacAdress().contains(result.getDevice().getAddress())) {
                                 newBeacon = false;
-
-
                                 transmitter.setRssi(rssi);
                                 transmitter.setLastUpdate(simpleDateFormat.format(calendar.getTime()));
 
                                 if (startSaveToDatabaseFlag) {
-                                    Log.d("Found device " ,device.getAddress());
                                     if (transmitter.isSavingSamples()) {
                                         if (transmitter.getSamplesIterator() == numberOfSamples) {
                                             transmitter.setSavingSamples(false);
                                             String str = "av of: "+ transmitter.getMacAdress()+": ";
                                             double average = averageOfList(transmitter.getSamplesTab());
-                                            Log.d("end " ,str+average);
                                             String temp = xCordinate +"," + yCordinate;
                                             mDatabaseReference.child(temp).child(result.getDevice().getAddress()).setValue(average);
                                             //Toast.makeText(getApplicationContext(), "Beacons samples upload success!", Toast.LENGTH_SHORT).show();
@@ -317,8 +311,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         Transmitter transmitter = new Transmitter(device.getAddress(),
                                 simpleDateFormat.format(calendar.getTime()), rssi, "Beacon");
                         beaconList.add(transmitter);
-                        Toast.makeText(getApplicationContext(),
-                                "New Beacon", Toast.LENGTH_SHORT).show();
                     }
                     listViewBeacon.setAdapter(adapterBle);
                 }
@@ -340,13 +332,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     0, magnetometerReading.length);
         }
 
-        // Update rotation matrix, which is needed to update orientation angles.
         SensorManager.getRotationMatrix(rotationMatrix, null,
                 accelerometerReading, magnetometerReading);
 
-        // "rotationMatrix" now has up-to-date information.
         SensorManager.getOrientation(rotationMatrix, orientationAngles);
-        // "orientationAngles" now has up-to-date information.
         azimuth = (int) Math.toDegrees(orientationAngles[0]);
         azimuth = (azimuth + 360) % 360;
         directionCompassTv.setText("Direction value: " + azimuth + "°");
@@ -412,7 +401,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         int radioId = radiogroup.getCheckedRadioButtonId();
         radioButton= findViewById(radioId);
         directionInDatabase= String.valueOf(radioButton.getText());
-        // Zmiana na potrzebę badania fluktuacji - do bazy danych zapisywane jest 150 próbek w child fluktuacje
+        // saving samples
         //mDatabaseReference = FirebaseDatabase.getInstance().getReference().child("fluktuacja").child(directionInDatabase);
         mDatabaseReference = FirebaseDatabase.getInstance().getReference().child(directionInDatabase);
     }
